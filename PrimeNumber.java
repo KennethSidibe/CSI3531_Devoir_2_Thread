@@ -1,4 +1,6 @@
-import java.util.Arrays;
+// Kenneth Sidibe
+// 300099184
+
 
 public class PrimeNumber implements Runnable {
 
@@ -7,14 +9,14 @@ public class PrimeNumber implements Runnable {
     private int[][] workRange;
     private volatile boolean threadStop = false;
     private int numberToVerify;
+    private int[] primeNumber;
 
     public static void main(String[] args) {
 
         PrimeNumber testPrime = new PrimeNumber();
 
-        testPrime.isPrimeNumber(7);
-
-        System.out.println(testPrime.threadStop);
+        // System.out.println(testPrime.isPrimeNumber(25));
+        testPrime.listPrimeNumber(1000);
 
     }
 
@@ -27,6 +29,15 @@ public class PrimeNumber implements Runnable {
             threadsToRun[i] = thread;
             threadsToRun[i].start();
         }
+
+        for (Thread thread : threadsToRun) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        
     }
 
     private void increaseArrayIndex() {
@@ -38,14 +49,20 @@ public class PrimeNumber implements Runnable {
     }
 
     public void listPrimeNumber(int startNumber) {
+        
+        boolean isThisPrime = false;
+        primeNumber = new int[startNumber];
 
-        for(int i=startNumber; i >=1; i--){
-            
-            if(isPrimeNumber(i)) {
+        for(int i=startNumber; i >= 2; i--){
+            isThisPrime = this.isPrimeNumber(i);
+
+            if(isThisPrime) {
                 System.out.println(i);
+                isThisPrime = false;
             }
-
+    
         }
+
     }
 
     public boolean doesNumberNegatesNumberFromPrime(int numberToVerify, int numberToDivide) {
@@ -61,17 +78,15 @@ public class PrimeNumber implements Runnable {
         this.workRange = divideWork(this.numberToVerify);
         this.threadStop = false;
         this.arrayIndex = 0;
-        
-        boolean isPrimeNumberChecker = false;
-       
+
         this.start();
 
         while(Thread.interrupted()) {
-            // thread is running
-        }
 
-        return isPrimeNumberChecker;
-       
+        }
+    
+        return !threadStop;
+    
     }
 
     // Calculate number of arrays needed to divide work
@@ -93,17 +108,17 @@ public class PrimeNumber implements Runnable {
 
         int rangeArraySize = calculateSizeRangeArray(numberToVerify);
 
-        int[] numberRange = new int[maxNumberThread];
-        int[][] localWorkRange = new int[rangeArraySize][maxNumberThread];
+        int[] numberRange = new int[rangeArraySize];
+        int[][] localWorkRange = new int[maxNumberThread][rangeArraySize];
 
         for(int i = 2; i < numberToVerify;i++) {
 
             numberRange[j] = i; 
             j++;
 
-            if(j >= maxNumberThread || i == numberToVerify - 1) {
+            if(j >= rangeArraySize || i == numberToVerify - 1) {
                 localWorkRange[x] = numberRange;
-                numberRange = new int[maxNumberThread];
+                numberRange = new int[rangeArraySize];
                 j = 0;
                 x++;
             }
@@ -120,7 +135,11 @@ public class PrimeNumber implements Runnable {
         try {
 
             int[] valueRange = this.workRange[this.arrayIndex];
-            increaseArrayIndex();
+            if(arrayIndex >= workRange.length) {
+                arrayIndex = 0;
+            } else {
+                arrayIndex++;
+            }
             int x = 0;
 
             while(!threadStop && x < valueRange.length) {
