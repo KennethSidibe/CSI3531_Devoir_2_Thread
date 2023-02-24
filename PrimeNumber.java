@@ -16,7 +16,7 @@ public class PrimeNumber implements Runnable {
         PrimeNumber testPrime = new PrimeNumber();
 
         // System.out.println(testPrime.isPrimeNumber(25));
-        testPrime.listPrimeNumber(1000);
+        testPrime.listPrimeNumber(Integer.parseInt(args[0]));
 
     }
 
