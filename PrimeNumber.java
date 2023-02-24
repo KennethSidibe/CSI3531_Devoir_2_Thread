@@ -6,19 +6,16 @@ public class PrimeNumber implements Runnable {
     private int arrayIndex = 0;
     private int[][] workRange;
     private volatile boolean threadStop = false;
-    private int numberToVerify = 0;
-    private int xVolatileIndex = 0;
-    private int[] xVolatile = new int[5];
+    private int numberToVerify;
 
     public static void main(String[] args) {
 
         PrimeNumber testPrime = new PrimeNumber();
-        testPrime.numberToVerify = 20;
-        testPrime.workRange = testPrime.divideWork(testPrime.numberToVerify);
 
-        testPrime.start();
+        testPrime.isPrimeNumber(7);
 
-        System.out.println(Arrays.toString(testPrime.xVolatile));
+        System.out.println(testPrime.threadStop);
+
     }
 
     public void start() {
@@ -32,10 +29,18 @@ public class PrimeNumber implements Runnable {
         }
     }
 
+    private void increaseArrayIndex() {
+        if(arrayIndex >= workRange.length) {
+            arrayIndex =0;
+        } else {
+            arrayIndex++;
+        }
+    }
+
     public void listPrimeNumber(int startNumber) {
 
         for(int i=startNumber; i >=1; i--){
-
+            
             if(isPrimeNumber(i)) {
                 System.out.println(i);
             }
@@ -50,29 +55,23 @@ public class PrimeNumber implements Runnable {
         return numberToVerify % numberToDivide == 0;
     }
 
-    public boolean doesListNegatesNumber(int numberToVerify, int[] listToVerify) {
-        
-        for(int i = 0; i < listToVerify.length;i++) {
+    public boolean isPrimeNumber(int numberToVerifyIsPrime) {
 
-            if(doesNumberNegatesNumberFromPrime(numberToVerify, listToVerify[i])){
-                threadStop = true;
-                return true;
-            }
+        this.numberToVerify = numberToVerifyIsPrime;
+        this.workRange = divideWork(this.numberToVerify);
+        this.threadStop = false;
+        this.arrayIndex = 0;
+        
+        boolean isPrimeNumberChecker = false;
+       
+        this.start();
+
+        while(Thread.interrupted()) {
+            // thread is running
         }
 
-        return false;
-    }
-
-    public boolean isPrimeNumber(int numberToVerify) {
-        
-        for(int i=numberToVerify-1; i>1; i-- ){
-            
-            if (numberToVerify % i ==0) {
-                return false;
-            }
-        }
-
-        return true;
+        return isPrimeNumberChecker;
+       
     }
 
     // Calculate number of arrays needed to divide work
@@ -95,7 +94,7 @@ public class PrimeNumber implements Runnable {
         int rangeArraySize = calculateSizeRangeArray(numberToVerify);
 
         int[] numberRange = new int[maxNumberThread];
-        int[][] workRange = new int[rangeArraySize][maxNumberThread];
+        int[][] localWorkRange = new int[rangeArraySize][maxNumberThread];
 
         for(int i = 2; i < numberToVerify;i++) {
 
@@ -103,7 +102,7 @@ public class PrimeNumber implements Runnable {
             j++;
 
             if(j >= maxNumberThread || i == numberToVerify - 1) {
-                workRange[x] = numberRange;
+                localWorkRange[x] = numberRange;
                 numberRange = new int[maxNumberThread];
                 j = 0;
                 x++;
@@ -112,7 +111,7 @@ public class PrimeNumber implements Runnable {
             
         }
 
-        return workRange;
+        return localWorkRange;
 
     }
 
@@ -120,19 +119,15 @@ public class PrimeNumber implements Runnable {
         
         try {
 
-            int[] valueRange = workRange[arrayIndex];
-            arrayIndex++;
+            int[] valueRange = this.workRange[this.arrayIndex];
+            increaseArrayIndex();
             int x = 0;
 
             while(!threadStop && x < valueRange.length) {
 
                 // System.out.println(Thread.currentThread().getName() + " is checking : " + numberToVerify + " and " + valueRange[x]);
-                threadStop = doesNumberNegatesNumberFromPrime(numberToVerify, valueRange[x]);
+                threadStop = doesNumberNegatesNumberFromPrime(this.numberToVerify, valueRange[x]);
                 // System.out.println(Thread.currentThread().getName() + " found that  : " + numberToVerify + " and " + valueRange[x] + " gives => " + threadStop + "\n");
-                if(threadStop) {
-                    xVolatile[xVolatileIndex] = valueRange[x];
-                    xVolatileIndex++;
-                }
                 x++;
 
             }
